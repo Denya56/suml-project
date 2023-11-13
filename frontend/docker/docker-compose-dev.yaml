@@ -5,11 +5,11 @@ services:
     # stdin_open: true
     # tty: true
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ../
+      dockerfile: docker/Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./src:/usr/suml/frontend/src:ro
+      - ../src:/usr/suml/frontend/src:ro
     env_file:
-      - ./.env
+      - .env
