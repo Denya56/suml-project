@@ -1,0 +1,15 @@
+FROM node:18.18.2-alpine
+
+WORKDIR /usr/suml/frontend
+
+RUN cd ..
+
+COPY package*.json .
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
