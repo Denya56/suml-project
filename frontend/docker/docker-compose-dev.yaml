@@ -1,15 +1,15 @@
 version: '3.8'
 services:
-  suml_react_dev:
-    container_name: suml_react_dev
+  suml_streamlit_dev:
+    container_name: suml_streamlit_dev
     # stdin_open: true
     # tty: true
     build:
       context: ../
       dockerfile: docker/Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "8501:8501"
     volumes:
-      - ../src:/usr/suml/frontend/src:ro
+      - ../:/usr/suml/frontend/:ro
     env_file:
       - .env
