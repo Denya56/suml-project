@@ -4,7 +4,7 @@ import sys
 def install_libraries():
     try:
         # Install required Python libraries
-        subprocess.run([sys.executable, "-m", "pip", "install", "streamlit", "spacy", "wordcloud", "keras", "seaborn"])
+        subprocess.run([sys.executable, "-m", "pip", "install", "streamlit", "spacy", "wordcloud", "keras", "seaborn", "tensorflow"])
 
         print("Libraries installed successfully!")
 
