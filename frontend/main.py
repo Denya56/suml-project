@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import spacy
@@ -13,23 +14,51 @@ import seaborn as sns
 max_words = 5000
 max_len = 500
 
-# loading the saved model
-loaded_model = load_model('..\model\modelv2.h5')
-
-nlp = spacy.load('en_core_web_md', disable=['ner', 'parser'])
-nlp.add_pipe('sentencizer')
-nlp.Defaults.stop_words.add("game")
-nlp.Defaults.stop_words.add("play")
-nlp.Defaults.stop_words.add("t")
-
 # Function to remove stopwords
 def remove_stopwords(text):
-    return ' '.join(filter(lambda x: x not in nlp.Defaults.stop_words, text.split()))
+    return ' '.join(filter(lambda x: x not in st.session_state.nlp.Defaults.stop_words, text.split()))
 
 # Function to lemmatize
 def lemmatize(text):
-    return ' '.join([x.lemma_ for x in nlp(text)])
+    return ' '.join([x.lemma_ for x in st.session_state.nlp(text)])
+
+def clean_data(data, re_letters):
+    data['text'] = data['text'].apply(lambda x: x.lower())
+    data['text'] = data['text'].apply(lambda x: re_letters.sub('', x))
     
+    
+if 'loaded_model' not in st.session_state:
+    # loading the saved model
+    model_path = os.path.join(os.path.dirname(os.getcwd()), 'model', '18_01_model.h5')
+    loaded_model = load_model(model_path)
+    st.session_state.loaded_model = loaded_model
+
+if 'nlp' not in st.session_state:
+    nlp = spacy.load('en_core_web_md', disable=['ner', 'parser'])
+    nlp.add_pipe('sentencizer')
+    nlp.Defaults.stop_words.add("game")
+    nlp.Defaults.stop_words.add("play")
+    nlp.Defaults.stop_words.add("t")
+    st.session_state.nlp = nlp
+
+if 'tokenizer' not in st.session_state:
+    names=['text', 'label']
+    df = pd.read_csv(os.path.join(os.path.dirname(os.getcwd()), 'model', 'train_dataset.csv'), names=names)
+    
+    # clean data for tokenizer
+    data=df[['text','label']]
+    re_letters=re.compile(r"[^a-zA-Z\s']")
+
+    clean_data(data, re_letters)
+    data['text']=data['text'].apply(remove_stopwords)
+    data['text']=data['text'].apply(lemmatize)
+
+    tokenizer = Tokenizer(num_words=max_words)
+    tokenizer.fit_on_texts(data.text)
+    
+    st.session_state.tokenizer = tokenizer
+
+print('xdd')
 def main():
     st.markdown("""
     <style>
@@ -56,8 +85,6 @@ def main():
     }
     </style>
     """, unsafe_allow_html=True)
-
-    tokenizer = Tokenizer(num_words=max_words)
     
     st.title('Review Sentiment Analysis')
     with st.form(key='game_review_form'):
@@ -66,15 +93,12 @@ def main():
         submit_button = st.form_submit_button(label='Submit')
     
     user_input = lemmatize(user_input)
-    print(user_input)
     # Tokenize and pad the user input
-    user_sequence = tokenizer.texts_to_sequences([user_input])
+    user_sequence = st.session_state.tokenizer.texts_to_sequences([user_input])
     user_data = pad_sequences(user_sequence, maxlen=max_len)
-    print(user_input)
-    print(user_data)
     
     # Make predictions for the user input
-    user_prediction = loaded_model.predict(user_data)[0]
+    user_prediction = st.session_state.loaded_model.predict(user_data)[0]
     
     # Print the predicted label for the user input
     if user_prediction[1] > user_prediction[0]:
